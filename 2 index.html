@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原子クイズ</title>
+    <style>
+        :root {
+            --bg-color-dark: #2c3044;
+            --primary-text-color-dark: #E0E0E0;
+            --button-bg-dark: #4E5476;
+            --button-hover-bg-dark: #6A7094;
+            --settings-bg-dark: rgba(0,0,0,0.2);
+            --input-bg-dark: #2c3044;
+            --input-border-dark: #4E5476;
+            --unselected-btn-bg-dark: #adb5bd;
+            --unselected-btn-text-dark: #000;
+            --unselected-btn-hover-bg-dark: #c1c8ce;
+
+            --bg-color-light: #f0f2f5;
+            --primary-text-color-light: #1c1e21;
+            --button-bg-light: #e4e6eb;
+            --button-hover-bg-light: #d8dbdf;
+            --settings-bg-light: rgba(255,255,255,0.8);
+            --input-bg-light: #ffffff;
+            --input-border-light: #ccd0d5;
+            --unselected-btn-bg-light: #6c757d;
+            --unselected-btn-text-light: #ffffff;
+            --unselected-btn-hover-bg-light: #828a91;
+
+            --bg-color: var(--bg-color-dark);
+            --primary-text-color: var(--primary-text-color-dark);
+            --button-bg: var(--button-bg-dark);
+            --button-hover-bg: var(--button-hover-bg-dark);
+            --settings-bg: var(--settings-bg-dark);
+            --input-bg: var(--input-bg-dark);
+            --input-border: var(--input-border-dark);
+            --unselected-btn-bg: var(--unselected-btn-bg-dark);
+            --unselected-btn-text: var(--unselected-btn-text-dark);
+            --unselected-btn-hover-bg: var(--unselected-btn-hover-bg-dark);
+
+            --green-btn: #4CAF50; --green-btn-hover: #5CBF60;
+            --gray-btn: #6c757d; --gray-btn-hover: #828a91;
+            --yellow-btn: #ffc107; --yellow-btn-hover: #ffca2c;
+            --red-btn: #dc3545; --red-btn-hover: #e45b68;
+            --answer-btn-color: #29b6f6;
+            --dark-lemon-btn: #FBC02D; --dark-lemon-btn-hover: #F9A825;
+            --yellow-green-btn: #AFB42B; --yellow-green-btn-hover: #9E9D24;
+            --correct-color: #28a745; --incorrect-color: #dc3545;
+            --font-family: 'Helvetica Neue', 'Arial', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif;
+            
+            --genre-seni: #FF4500; --genre-tenkei: #00BFFF; --genre-alkali: #DC143C;
+            --genre-alkali-earth: #FFD700; --genre-halogen: #9ACD32; --genre-kigasu: #00FFFF;
+            --genre-lanthanoid: #FFA500; --genre-actinoid: #708090;
+
+            --format-color-1: #E53935; --format-color-2: #EC407A; --format-color-3: #D81B60;
+            --format-color-4: #1E88E5; --format-color-5: #8E24AA; --format-color-6: #5E35B1;
+            --format-color-7: #FDD835; --format-color-8: #7CB342; --format-color-9: #C62828;
+            --format-color-10: #00897B; --format-color-11: #FB8C00; --format-color-12: #78909C;
+
+            --mode-survival: #FF9800; --mode-endless: #F44336;
+            --mode-hardcore: #212121; --mode-hardcore-glow: #9C27B0;
+        }
+
+        body[data-theme="light"] {
+            --bg-color: var(--bg-color-light);
+            --primary-text-color: var(--primary-text-color-light);
+            --button-bg: var(--button-bg-light);
+            --button-hover-bg: var(--button-hover-bg-light);
+            --settings-bg: var(--settings-bg-light);
+            --input-bg: var(--input-bg-light);
+            --input-border: var(--input-border-light);
+            --unselected-btn-bg: var(--unselected-btn-bg-light);
+            --unselected-btn-text: var(--unselected-btn-text-light);
+            --unselected-btn-hover-bg: var(--unselected-btn-hover-bg-light);
+        }
+
+        .theme-transition, .theme-transition * {
+            transition: background-color 5s ease, color 5s ease, border-color 5s ease, box-shadow 5s ease, fill 5s ease !important;
+        }
+
+        @keyframes hardcore-glow { 0%, 100% { box-shadow: 0 0 8px 3px var(--mode-hardcore); } 50% { box-shadow: 0 0 12px 6px var(--mode-hardcore-glow); } }
+        @keyframes endless-glow { 0%, 100% { box-shadow: 0 0 8px 3px var(--mode-hardcore); } 50% { box-shadow: 0 0 12px 6px var(--mode-endless); } }
+
+        body { background-color: var(--bg-color); color: var(--primary-text-color); font-family: var(--font-family); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; text-align: center; user-select: none; -webkit-user-select: none; overflow: hidden; }
+        .container { width: 100%; max-width: 800px; padding: 20px; box-sizing: border-box; position: relative; }
+        #title-screen, #quiz-screen { display: none; }
+        #title-screen.active, #quiz-screen.active { display: block; }
+        h1 { font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary-text-color); text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .range-settings { background-color: var(--settings-bg); padding: 20px; border-radius: 15px; margin-bottom: 1rem; }
+        .range-control { margin-bottom: 1rem; }
+        .range-control:last-child { margin-bottom: 0; }
+        .range-label { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; font-weight: bold; }
+        .range-value { font-size: 3rem; font-weight: bold; color: var(--primary-text-color); margin-bottom: 1rem; }
+        .range-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px; }
+        .btn { padding: 10px 15px; font-size: 1rem; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease; color: white; min-width: 45px; box-sizing: border-box; }
+        .btn:active { transform: scale(0.95); }
+        .range-btn { background-color: var(--button-bg); color: var(--primary-text-color); }
+        .range-btn:hover { background-color: var(--button-hover-bg); }
+        .title-actions { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 1rem; }
+        #start-btn, #format-btn { padding: 15px 40px; font-size: 1.5rem; }
+        #start-btn { background-color: var(--green-btn); }
+        #start-btn:hover { background-color: var(--green-btn-hover); }
+        #start-btn.hardcore-active { background-color: var(--mode-hardcore); animation: hardcore-glow 2s infinite; }
+        #format-btn { background-color: var(--gray-btn); transition: background-color 0.5s ease; }
+        #default-range-btn { background-color: var(--gray-btn); padding: 10px 20px; font-size: 1rem; margin-top: 10px; }
+        #default-range-btn:hover { background-color: var(--gray-btn-hover); }
+        #expansion-btn { margin-top: 15px; font-size: 0.9rem; padding: 12px 20px; background-color: var(--dark-lemon-btn); color: #000; position: relative; overflow: hidden; }
+        #expansion-btn::before { content: ''; position: absolute; top: 0; left: 0; height: 100%; width: var(--fill-width, 0%); background-color: rgba(255, 0, 0, 0.3); }
+        #expansion-btn.genshicho { background-color: var(--yellow-green-btn); color: #FFF;}
+        #expansion-btn.genshicho:hover { background-color: var(--yellow-green-btn-hover); }
+        
+        #quiz-screen { position: relative; }
+        #quiz-wrapper { transition: transform 0.5s ease-in-out; transform-origin: center center; }
+        #quiz-wrapper.rotated { transform: rotate(180deg); }
+
+        #quiz-header { position: absolute; top: -40px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; padding: 0 10px; z-index: 5; }
+        #battle-hud { position: absolute; left: 10px; text-align: left; font-size: 1.2rem; line-height: 1.4; color: var(--primary-text-color); }
+        #turn-display { text-align: center; font-size: 1.5rem; font-weight: bold; white-space: nowrap; }
+        #quiz-info { position: absolute; left: 10px; font-size: 1.2rem; line-height: 1.4; color: var(--primary-text-color); }
+        
+        #timer-display { position: absolute; top: 0px; left: 50%; transform: translateX(-50%); font-size: 2rem; font-weight: bold; }
+        #quiz-content-area { margin-top: 40px; }
+        #question-container { margin-top: 20px; margin-bottom: 1rem; }
+        #question-text { font-size: 2.5rem; font-weight: bold; }
+        #options-grid { display: grid; gap: 10px; margin-top: 20px; }
+        .option-btn { background-color: var(--button-bg); color: var(--primary-text-color); padding: 18px 10px; font-size: 1.1rem; }
+        .option-btn:hover { background-color: var(--button-hover-bg); }
+        .option-btn.correct { background-color: var(--correct-color); color: white; }
+        .option-btn.incorrect { background-color: var(--incorrect-color); color: white; }
+        .option-btn:disabled { cursor: default; opacity: 0.8; }
+        .option-btn.faded { opacity: 0.5; }
+        
+        .icon-btn { position: absolute; background: none; border: none; cursor: pointer; padding: 10px; z-index: 10; }
+        #pause-btn { top: 0px; right: 0px; }
+        .icon-btn:disabled { opacity: 0.5; cursor: default; }
+        .icon-btn svg { width: 32px; height: 32px; fill: var(--primary-text-color); transition: transform 0.2s; }
+        .icon-btn:hover:not(:disabled) svg { transform: scale(1.1); }
+        #coin-display { position: absolute; top: 20px; right: 70px; background-color: var(--yellow-btn); color: #000; font-size: 1.2rem; font-weight: bold; padding: 8px 15px; }
+        
+        #input-container { margin-top: 1rem; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        #answer-input { font-size: 1.5rem; padding: 10px; border-radius: 8px; border: 2px solid var(--input-border); background-color: var(--input-bg); color: var(--primary-text-color); text-align: center; }
+        #submit-answer-btn { background-color: var(--answer-btn-color); }
+        #input-helper { font-size: 0.9rem; margin-top: 5px; opacity: 0.7; position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); width: 100%;}
+        
+        #genre-container { background-color: var(--settings-bg); padding: 15px; border-radius: 15px; margin-top: 1rem; }
+        #genre-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .genre-btn { background-color: var(--unselected-btn-bg); color: var(--unselected-btn-text); font-size: 0.9rem; padding: 8px 12px; transition: none; }
+        .genre-btn:hover { background-color: var(--unselected-btn-hover-bg); }
+        .genre-btn.selected[data-genre="遷移元素"] { background-color: var(--genre-seni); color: white; }
+        .genre-btn.selected[data-genre="典型元素"] { background-color: var(--genre-tenkei); color: white; }
+        .genre-btn.selected[data-genre="アルカリ金属"] { background-color: var(--genre-alkali); color: white; }
+        .genre-btn.selected[data-genre="アルカリ土類金属"] { background-color: var(--genre-alkali-earth); color: #000; }
+        .genre-btn.selected[data-genre="ハロゲン"] { background-color: var(--genre-halogen); color: #000; }
+        .genre-btn.selected[data-genre="貴ガス"] { background-color: var(--genre-kigasu); color: #000; }
+        .genre-btn.selected[data-genre="ランタノイド"] { background-color: var(--genre-lanthanoid); color: #000; }
+        .genre-btn.selected[data-genre="アクチノイド"] { background-color: var(--genre-actinoid); color: white; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background-color: var(--bg-color); border: 1px solid var(--button-bg); padding: 30px 40px; border-radius: 15px; display: flex; flex-direction: column; gap: 20px; min-width: 300px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-content h2 { margin-top: 0; font-size: 1.8rem; }
+        .modal-btn { width: 100%; padding: 15px; font-size: 1.2rem; }
+        #retry-btn { background-color: var(--yellow-btn); color: #000; }
+        #title-btn { background-color: var(--unselected-btn-bg); color: var(--unselected-btn-text); }
+        #title-btn:hover { background-color: var(--unselected-btn-hover-bg); }
+        .gray-close-btn { background-color: var(--unselected-btn-bg); color: var(--unselected-btn-text); }
+        .gray-close-btn:hover { background-color: var(--unselected-btn-hover-bg); }
+        #confirm-yes-btn { background-color: var(--red-btn); }
+        .confirmation-buttons { display: flex; gap: 10px; justify-content: center; }
+        .setting-item { border-top: 1px solid var(--button-bg); padding-top: 20px; }
+        .setting-item h3 { margin-top: 0; margin-bottom: 10px; }
+        .setting-value { font-size: 2rem; font-weight: bold; margin-bottom: 15px; }
+        .setting-buttons { display: flex; flex-wrap: nowrap; justify-content: center; gap: 4px; overflow-x: auto; padding-bottom: 10px; }
+        .setting-buttons .btn { flex-shrink: 0; font-size: 0.8rem; padding: 8px; min-width: 40px; }
+        #options-count-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        #options-count-buttons .btn { font-size: 1rem; }
+        #options-count-buttons .btn.active { background-color: var(--green-btn); color: white !important; }
+        #results-text { font-size: 1.2rem; }
+        .mode-btn-container { display: flex; justify-content: center; gap: 10px; }
+        #survival-section { display: none; }
+        .mode-btn.endless { animation: endless-glow 2s infinite; }
+        .mode-btn.hardcore { animation: hardcore-glow 2s infinite; }
+        
+        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--green-btn); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        
+        #interrupt-overlay { flex-direction: column; gap: 20px; color: white; }
+        #interrupt-circle { width: 100px; height: 100px; }
+        #interrupt-circle-path { fill: none; stroke: var(--red-btn); stroke-width: 10; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
+        
+        #format-modal .modal-content { max-width: 800px; }
+        #format-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .format-btn { font-size: 1rem; padding: 15px 10px; background-color: var(--unselected-btn-bg); color: var(--unselected-btn-text); transition: none; }
+        .format-btn:hover { background-color: var(--unselected-btn-hover-bg); }
+        .format-btn.selected { color: white; }
+        #save-formats-btn, #reset-formats-btn { margin-top: 10px; }
+        
+        #genshicho-modal .modal-content { width: 90vw; max-width: 500px; height: 70vh; max-height: 700px; padding: 20px; }
+        #genshicho-content { display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: 1fr auto 1fr; position: relative; height: 100%; }
+        #genshicho-header { grid-column: 1 / 4; display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; }
+        #genshicho-main { grid-column: 1 / 4; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #genshicho-footer { grid-column: 1 / 4; display: flex; justify-content: space-between; align-items: center; }
+        #genshicho-symbol { font-size: 10rem; font-weight: bold; line-height: 1; }
+        #genshicho-name { font-size: 2.5rem; margin-top: 10px; }
+        #genshicho-footer .btn { padding: 10px 20px; }
+        #genshicho-center-controls { display: flex; gap: 10px; position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); }
+        
+        #genshicho-list-modal .modal-content { max-width: 700px; }
+        #genshicho-list-container { flex-grow: 1; overflow-y: auto; }
+        .genshicho-list-category { margin-top: 20px; border-top: 2px solid var(--button-bg); padding-top: 10px; }
+        .genshicho-list-category h3 { margin: 0 0 15px 0; font-size: 1.5rem; }
+        .genshicho-list-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .genshicho-list-grid .btn { width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 10px; }
+        
+        #color-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; }
+        .color-btn { font-size: 1.2rem; padding: 20px 10px; }
+        .color-btn:disabled { opacity: 0.5; background-color: var(--gray-btn); cursor: not-allowed; }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div class="container">
+        <!-- Title Screen -->
+        <div id="title-screen" class="active">
+            <button id="coin-display" class="btn">🪙×5</button>
+            <button id="settings-btn" class="icon-btn" style="top:20px; right: 20px;">
+                <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42L9.13 5.07c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.64-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12-.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"></path></svg>
+            </button>
+            <h1>原子クイズ</h1>
+            <div class="range-settings">
+                <div class="range-control">
+                    <span class="range-label">min</span>
+                    <div id="min-value" class="range-value">1</div>
+                    <div class="range-buttons"></div>
+                </div>
+                <div class="range-control">
+                    <span class="range-label">Max</span>
+                    <div id="max-value" class="range-value">20</div>
+                    <div class="range-buttons"></div>
+                    <button id="default-range-btn" class="btn">デフォルトの範囲に戻す</button>
+                    <button id="expansion-btn" class="btn"></button>
+                </div>
+            </div>
+             <div id="genre-container">
+                <div id="genre-buttons"></div>
+            </div>
+            <div class="title-actions">
+                <button id="format-btn" class="btn">形式</button>
+                <button id="start-btn" class="btn">スタート</button>
+            </div>
+        </div>
+        <div id="quiz-screen"></div>
+    </div>
+    <div id="pause-menu" class="modal-overlay"></div>
+    <div id="confirmation-popup" class="modal-overlay"></div>
+    <div id="settings-modal" class="modal-overlay"></div>
+    <div id="coin-info-modal" class="modal-overlay"></div>
+    <div id="results-modal" class="modal-overlay"></div>
+    <div id="info-popup" class="modal-overlay"></div>
+    <div id="genshicho-modal" class="modal-overlay"></div>
+    <div id="genshicho-list-modal" class="modal-overlay"></div>
+    <div id="format-modal" class="modal-overlay"></div>
+    <div id="color-selection-modal" class="modal-overlay"></div>
+    <div id="interrupt-overlay" class="modal-overlay"></div>
+
+    <script>
+        const elementData = [ {number:1,symbol:"H",name:"水素",period:1,group:1,categories:["典型元素"]}, {number:2,symbol:"He",name:"ヘリウム",period:1,group:18,categories:["貴ガス","典型元素"]}, {number:3,symbol:"Li",name:"リチウム",period:2,group:1,categories:["アルカリ金属","典型元素"]}, {number:4,symbol:"Be",name:"ベリリウム",period:2,group:2,categories:["アルカリ土類金属","典型元素"]}, {number:5,symbol:"B",name:"ホウ素",period:2,group:13,categories:["半金属","典型元素"]}, {number:6,symbol:"C",name:"炭素",period:2,group:14,categories:["典型元素"]}, {number:7,symbol:"N",name:"窒素",period:2,group:15,categories:["典型元素"]}, {number:8,symbol:"O",name:"酸素",period:2,group:16,categories:["典型元素"]}, {number:9,symbol:"F",name:"フッ素",period:2,group:17,categories:["ハロゲン","典型元素"]}, {number:10,symbol:"Ne",name:"ネオン",period:2,group:18,categories:["貴ガス","典型元素"]}, {number:11,symbol:"Na",name:"ナトリウム",period:3,group:1,categories:["アルカリ金属","典型元素"]}, {number:12,symbol:"Mg",name:"マグネシウム",period:3,group:2,categories:["アルカリ土類金属","典型元素"]}, {number:13,symbol:"Al",name:"アルミニウム",period:3,group:13,categories:["典型元素"]}, {number:14,symbol:"Si",name:"ケイ素",period:3,group:14,categories:["半金属","典型元素"]}, {number:15,symbol:"P",name:"リン",period:3,group:15,categories:["典型元素"]}, {number:16,symbol:"S",name:"硫黄",period:3,group:16,categories:["典型元素"]}, {number:17,symbol:"Cl",name:"塩素",period:3,group:17,categories:["ハロゲン","典型元素"]}, {number:18,symbol:"Ar",name:"アルゴン",period:3,group:18,categories:["貴ガス","典型元素"]}, {number:19,symbol:"K",name:"カリウム",period:4,group:1,categories:["アルカリ金属","典型元素"]}, {number:20,symbol:"Ca",name:"カルシウム",period:4,group:2,categories:["アルカリ土類金属","典型元素"]}, {number:21,symbol:"Sc",name:"スカンジウム",period:4,group:3,categories:["遷移元素"]}, {number:22,symbol:"Ti",name:"チタン",period:4,group:4,categories:["遷移元素"]}, {number:23,symbol:"V",name:"バナジウム",period:4,group:5,categories:["遷移元素"]}, {number:24,symbol:"Cr",name:"クロム",period:4,group:6,categories:["遷移元素"]}, {number:25,symbol:"Mn",name:"マンガン",period:4,group:7,categories:["遷移元素"]}, {number:26,symbol:"Fe",name:"鉄",period:4,group:8,categories:["遷移元素"]}, {number:27,symbol:"Co",name:"コバルト",period:4,group:9,categories:["遷移元素"]}, {number:28,symbol:"Ni",name:"ニッケル",period:4,group:10,categories:["遷移元素"]}, {number:29,symbol:"Cu",name:"銅",period:4,group:11,categories:["遷移元素"]}, {number:30,symbol:"Zn",name:"亜鉛",period:4,group:12,categories:["遷移元素"]}, {number:31,symbol:"Ga",name:"ガリウム",period:4,group:13,categories:["典型元素"]}, {number:32,symbol:"Ge",name:"ゲルマニウム",period:4,group:14,categories:["半金属","典型元素"]}, {number:33,symbol:"As",name:"ヒ素",period:4,group:15,categories:["半金属","典型元素"]}, {number:34,symbol:"Se",name:"セレン",period:4,group:16,categories:["典型元素"]}, {number:35,symbol:"Br",name:"臭素",period:4,group:17,categories:["ハロゲン","典型元素"]}, {number:36,symbol:"Kr",name:"クリプトン",period:4,group:18,categories:["貴ガス","典型元素"]}, {number:37,symbol:"Rb",name:"ルビジウム",period:5,group:1,categories:["アルカリ金属","典型元素"]}, {number:38,symbol:"Sr",name:"ストロンチウム",period:5,group:2,categories:["アルカリ土類金属","典型元素"]}, {number:39,symbol:"Y",name:"イットリウム",period:5,group:3,categories:["遷移元素"]}, {number:40,symbol:"Zr",name:"ジルコニウム",period:5,group:4,categories:["遷移元素"]}, {number:41,symbol:"Nb",name:"ニオブ",period:5,group:5,categories:["遷移元素"]}, {number:42,symbol:"Mo",name:"モリブデン",period:5,group:6,categories:["遷移元素"]}, {number:43,symbol:"Tc",name:"テクネチウム",period:5,group:7,categories:["遷移元素"]}, {number:44,symbol:"Ru",name:"ルテニウム",period:5,group:8,categories:["遷移元素"]}, {number:45,symbol:"Rh",name:"ロジウム",period:5,group:9,categories:["遷移元素"]}, {number:46,symbol:"Pd",name:"パラジウム",period:5,group:10,categories:["遷移元素"]}, {number:47,symbol:"Ag",name:"銀",period:5,group:11,categories:["遷移元素"]}, {number:48,symbol:"Cd",name:"カドミウム",period:5,group:12,categories:["遷移元素"]}, {number:49,symbol:"In",name:"インジウム",period:5,group:13,categories:["典型元素"]}, {number:50,symbol:"Sn",name:"スズ",period:5,group:14,categories:["典型元素"]}, {number:51,symbol:"Sb",name:"アンチモン",period:5,group:15,categories:["半金属","典型元素"]}, {number:52,symbol:"Te",name:"テルル",period:5,group:16,categories:["半金属","典型元素"]}, {number:53,symbol:"I",name:"ヨウ素",period:5,group:17,categories:["ハロゲン","典型元素"]}, {number:54,symbol:"Xe",name:"キセノン",period:5,group:18,categories:["貴ガス","典型元素"]}, {number:55,symbol:"Cs",name:"セシウム",period:6,group:1,categories:["アルカリ金属","典型元素"]}, {number:56,symbol:"Ba",name:"バリウム",period:6,group:2,categories:["アルカリ土類金属","典型元素"]}, {number:57,symbol:"La",name:"ランタン",period:6,group:null,categories:["ランタノイド"]}, {number:58,symbol:"Ce",name:"セリウム",period:6,group:null,categories:["ランタノイド"]}, {number:59,symbol:"Pr",name:"プラセオジム",period:6,group:null,categories:["ランタノイド"]}, {number:60,symbol:"Nd",name:"ネオジム",period:6,group:null,categories:["ランタノイド"]}, {number:61,symbol:"Pm",name:"プロメチウム",period:6,group:null,categories:["ランタノイド"]}, {number:62,symbol:"Sm",name:"サマリウム",period:6,group:null,categories:["ランタノイド"]}, {number:63,symbol:"Eu",name:"ユウロピウム",period:6,group:null,categories:["ランタノイド"]}, {number:64,symbol:"Gd",name:"ガドリニウム",period:6,group:null,categories:["ランタノイド"]}, {number:65,symbol:"Tb",name:"テルビウム",period:6,group:null,categories:["ランタノイド"]}, {number:66,symbol:"Dy",name:"ジスプロシウム",period:6,group:null,categories:["ランタノイド"]}, {number:67,symbol:"Ho",name:"ホルミウム",period:6,group:null,categories:["ランタノイド"]}, {number:68,symbol:"Er",name:"エルビウム",period:6,group:null,categories:["ランタノイド"]}, {number:69,symbol:"Tm",name:"ツリウム",period:6,group:null,categories:["ランタノイド"]}, {number:70,symbol:"Yb",name:"イッテルビウム",period:6,group:null,categories:["ランタノイド"]}, {number:71,symbol:"Lu",name:"ルテチウム",period:6,group:3,categories:["ランタノイド","遷移元素"]}, {number:72,symbol:"Hf",name:"ハフニウム",period:6,group:4,categories:["遷移元素"]}, {number:73,symbol:"Ta",name:"タンタル",period:6,group:5,categories:["遷移元素"]}, {number:74,symbol:"W",name:"タングステン",period:6,group:6,categories:["遷移元素"]}, {number:75,symbol:"Re",name:"レニウム",period:6,group:7,categories:["遷移元素"]}, {number:76,symbol:"Os",name:"オスミウム",period:6,group:8,categories:["遷移元素"]}, {number:77,symbol:"Ir",name:"イリジウム",period:6,group:9,categories:["遷移元素"]}, {number:78,symbol:"Pt",name:"白金",period:6,group:10,categories:["遷移元素"]}, {number:79,symbol:"Au",name:"金",period:6,group:11,categories:["遷移元素"]}, {number:80,symbol:"Hg",name:"水銀",period:6,group:12,categories:["遷移元素"]}, {number:81,symbol:"Tl",name:"タリウム",period:6,group:13,categories:["典型元素"]}, {number:82,symbol:"Pb",name:"鉛",period:6,group:14,categories:["典型元素"]}, {number:83,symbol:"Bi",name:"ビスマス",period:6,group:15,categories:["典型元素"]}, {number:84,symbol:"Po",name:"ポロニウム",period:6,group:16,categories:["半金属","典型元素"]}, {number:85,symbol:"At",name:"アスタチン",period:6,group:17,categories:["ハロゲン","半金属"]}, {number:86,symbol:"Rn",name:"ラドン",period:6,group:18,categories:["貴ガス","典型元素"]}, {number:87,symbol:"Fr",name:"フランシウム",period:7,group:1,categories:["アルカリ金属","典型元素"]}, {number:88,symbol:"Ra",name:"ラジウム",period:7,group:2,categories:["アルカリ土類金属","典型元素"]}, {number:89,symbol:"Ac",name:"アクチニウム",period:7,group:null,categories:["アクチノイド"]}, {number:90,symbol:"Th",name:"トリウム",period:7,group:null,categories:["アクチノイド"]}, {number:91,symbol:"Pa",name:"プロトアクチニウム",period:7,group:null,categories:["アクチノイド"]}, {number:92,symbol:"U",name:"ウラン",period:7,group:null,categories:["アクチノイド"]}, {number:93,symbol:"Np",name:"ネプツニウム",period:7,group:null,categories:["アクチノイド"]}, {number:94,symbol:"Pu",name:"プルトニウム",period:7,group:null,categories:["アクチノイド"]}, {number:95,symbol:"Am",name:"アメリシウム",period:7,group:null,categories:["アクチノイド"]}, {number:96,symbol:"Cm",name:"キュリウム",period:7,group:null,categories:["アクチノイド"]}, {number:97,symbol:"Bk",name:"バークリウム",period:7,group:null,categories:["アクチノイド"]}, {number:98,symbol:"Cf",name:"カリホルニウム",period:7,group:null,categories:["アクチノイド"]}, {number:99,symbol:"Es",name:"アインスタイニウム",period:7,group:null,categories:["アクチノイド"]}, {number:100,symbol:"Fm",name:"フェルミウム",period:7,group:null,categories:["アクチノイド"]}, {number:101,symbol:"Md",name:"メンデレビウム",period:7,group:null,categories:["アクチノイド"]}, {number:102,symbol:"No",name:"ノーベリウム",period:7,group:null,categories:["アクチノイド"]}, {number:103,symbol:"Lr",name:"ローレンシウム",period:7,group:3,categories:["アクチノイド","遷移元素"]}, {number:104,symbol:"Rf",name:"ラザホージウム",period:7,group:4,categories:["遷移元素"]}, {number:105,symbol:"Db",name:"ドブニウム",period:7,group:5,categories:["遷移元素"]}, {number:106,symbol:"Sg",name:"シーボーギウム",period:7,group:6,categories:["遷移元素"]}, {number:107,symbol:"Bh",name:"ボーリウム",period:7,group:7,categories:["遷移元素"]}, {number:108,symbol:"Hs",name:"ハッシウム",period:7,group:8,categories:["遷移元素"]}, {number:109,symbol:"Mt",name:"マイトネリウム",period:7,group:9,categories:["遷移元素"]}, {number:110,symbol:"Ds",name:"ダームスタチウム",period:7,group:10,categories:["遷移元素"]}, {number:111,symbol:"Rg",name:"レントゲニウム",period:7,group:11,categories:["遷移元素"]}, {number:112,symbol:"Cn",name:"コペルニシウム",period:7,group:12,categories:["遷移元素"]}, {number:113,symbol:"Nh",name:"ニホニウム",period:7,group:13,categories:["典型元素"]}, {number:114,symbol:"Fl",name:"フレロビウム",period:7,group:14,categories:["典型元素"]}, {number:115,symbol:"Mc",name:"モスコビウム",period:7,group:15,categories:["典型元素"]}, {number:116,symbol:"Lv",name:"リバモリウム",period:7,group:16,categories:["典型元素"]}, {number:117,symbol:"Ts",name:"テネシン",period:7,group:17,categories:["ハロゲン","典型元素"]}, {number:118,symbol:"Og",name:"オガネソン",period:7,group:18,categories:["貴ガス","典型元素"]} ];
+        const expansionTiers = [ { limit: 36, cost: 5 }, { limit: 54, cost: 5 }, { limit: 71, cost: 7 }, { limit: 103, cost: 10 }, { limit: 118, cost: 15 } ];
+        const formatPeriodGroup = (el) => `${el.period}周期` + (el.group !== null ? ` ${el.group}族` : '');
+        const quizFormats = {
+            'number_to_name': { text: '原子番号→元素名', getQuestionText: el => `原子番号: ${el.number}`, getOptionText: el => el.name, answerType: "元素名", color: 'var(--format-color-1)'},
+            'number_to_symbol': { text: '原子番号→元素記号', getQuestionText: el => `原子番号: ${el.number}`, getOptionText: el => el.symbol, answerType: "元素記号", color: 'var(--format-color-2)'},
+            'number_to_period_group': { text: '原子番号→周期・族', getQuestionText: el => `原子番号: ${el.number}`, getOptionText: el => formatPeriodGroup(el), answerType: "周期・族", color: 'var(--format-color-3)'},
+            'symbol_to_number': { text: '元素記号→原子番号', getQuestionText: el => `元素記号: ${el.symbol}`, getOptionText: el => el.number, answerType: "原子番号", color: 'var(--format-color-4)'},
+            'symbol_to_name': { text: '元素記号→元素名', getQuestionText: el => `元素記号: ${el.symbol}`, getOptionText: el => el.name, answerType: "元素名", color: 'var(--format-color-5)'},
+            'symbol_to_period_group': { text: '元素記号→周期・族', getQuestionText: el => `元素記号: ${el.symbol}`, getOptionText: el => formatPeriodGroup(el), answerType: "周期・族", color: 'var(--format-color-6)'},
+            'name_to_number': { text: '元素名→原子番号', getQuestionText: el => `元素名: ${el.name}`, getOptionText: el => el.number, answerType: "原子番号", color: 'var(--format-color-7)'},
+            'name_to_symbol': { text: '元素名→元素記号', getQuestionText: el => `元素名: ${el.name}`, getOptionText: el => el.symbol, answerType: "元素記号", color: 'var(--format-color-8)'},
+            'name_to_period_group': { text: '元素名→周期・族', getQuestionText: el => `元素名: ${el.name}`, getOptionText: el => formatPeriodGroup(el), answerType: "周期・族", color: 'var(--format-color-9)'},
+            'period_group_to_number': { text: '周期・族→原子番号', getQuestionText: el => formatPeriodGroup(el), getOptionText: el => el.number, answerType: "原子番号", color: 'var(--format-color-10)'},
+            'period_group_to_symbol': { text: '周期・族→元素記号', getQuestionText: el => formatPeriodGroup(el), getOptionText: el => el.symbol, answerType: "元素記号", color: 'var(--format-color-11)'},
+            'period_group_to_name': { text: '周期・族→元素名', getQuestionText: el => formatPeriodGroup(el), getOptionText: el => el.name, answerType: "元素名", color: 'var(--format-color-12)'}
+        };
+
+        let state = {
+            min: 1, max: 20, defaultMin: 1, defaultMax: 20, unlockedMaxLimit: 20, quizLength: 10, numberOfOptions: 12,
+            questions: [], currentQuestionIndex: 0, correctAnswers: 0, confirmAction: null, coins: 5,
+            fibonacciBonusClaimed: false, twoPowerBonusClaimed: false, genshichoCurrentIndex: 0, modalZIndex: 1000,
+            selectedGenres: [], selectedFormats: ['number_to_name'], formatColorInterval: null, currentQuizFormat: null,
+            longPressTimer: null, isLongPress: false, pressAnimation: null,
+            timeLimitEnabled: false, timeLimit: 10, quizTimer: null, interruptTimer: null,
+            survivalMode: false, endlessMode: false, hardcoreMode: false, inputMode: false, lives: 3,
+            theme: 'dark', friendBattleMode: false,
+            players: [], currentPlayerIndex: 0, currentTurn: 1
+        };
+        let tempSettings = {};
+
+        const colorToHeart = { '赤': '❤️', '青': '💙', '黄': '💛', '緑': '💚', '紫': '💜', '橙': '🧡', '桃': '🩷', '水': '🩵', '灰': '🩶', '黒': '🖤', '白': '🤍' };
+
+        const showModal = (id) => { const modal = document.getElementById(id); if(modal) { state.modalZIndex++; modal.style.zIndex = state.modalZIndex; modal.classList.add('active'); } };
+        const hideModal = (modalOrId) => { const modal = typeof modalOrId === 'string' ? document.getElementById(modalOrId) : modalOrId; if (modal) { modal.classList.remove('active'); } };
+        const updateCoinDisplay = () => { document.getElementById('coin-display').textContent = `🪙×${state.coins}`; };
+        const updateRangeDisplay = () => { document.getElementById('min-value').textContent = state.min; document.getElementById('max-value').textContent = state.max; };
+        const showInfoPopup = (title, text) => { document.getElementById('info-popup').querySelector('h2').textContent = title; document.getElementById('info-popup').querySelector('p').textContent = text; showModal('info-popup'); };
+        const showConfirmation = (title, text, action) => { document.getElementById('confirmation-popup').querySelector('h2').textContent = title; document.getElementById('confirmation-popup').querySelector('p').textContent = text; state.confirmAction = action; showModal('confirmation-popup'); };
+        const showTitleScreen = () => { document.getElementById('title-screen').classList.add('active'); document.getElementById('quiz-screen').classList.remove('active'); document.querySelectorAll('.modal-overlay').forEach(hideModal); clearInterval(state.quizTimer); clearTimeout(state.interruptTimer); };
+        
+        const updateExpansionButton = () => {
+            const btn = document.getElementById('expansion-btn'); if (!btn) return;
+            if (state.unlockedMaxLimit >= 118) { btn.textContent = '原子帳'; btn.classList.add('genshicho');
+            } else {
+                const nextTier = expansionTiers.find(t => t.limit > state.unlockedMaxLimit);
+                if (nextTier) { btn.textContent = `範囲上限up (🪙×${nextTier.cost})`; btn.classList.remove('genshicho'); }
+            }
+        };
+        const updateFormatButtonColor = () => {
+            const btn = document.getElementById('format-btn'); clearInterval(state.formatColorInterval);
+            const selectedColors = state.selectedFormats.map(f => quizFormats[f].color);
+            if (selectedColors.length === 1) { btn.style.backgroundColor = selectedColors[0]; }
+            else if (selectedColors.length > 1) {
+                let colorIndex = 0; btn.style.backgroundColor = selectedColors[colorIndex];
+                state.formatColorInterval = setInterval(() => { colorIndex = (colorIndex + 1) % selectedColors.length; btn.style.backgroundColor = selectedColors[colorIndex]; }, 1000);
+            } else { btn.style.backgroundColor = 'var(--gray-btn)'; } };
+        const adjustRange = (target, value) => {
+            if(target === 'min') { state.min = Math.max(1, Math.min(state.max - 1, state.min + value)); }
+            else if (target === 'Max') { state.max = Math.min(state.unlockedMaxLimit, Math.max(state.min + 1, state.max + value)); }
+            if (state.max >= 36 && state.defaultMax < 36) state.defaultMax = 36;
+            updateRangeDisplay();
+        };
+        const updateQuizInfo = () => {
+            const soloHud = document.getElementById('quiz-info');
+            const battleHud = document.getElementById('battle-hud');
+            const turnDisplay = document.getElementById('turn-display');
+            if (state.friendBattleMode) {
+                soloHud.style.display = 'none';
+                battleHud.style.display = 'block';
+                turnDisplay.style.display = 'block';
+                turnDisplay.textContent = `${state.players[state.currentPlayerIndex].name}のターン (ターン${state.currentTurn}/${state.endlessMode ? '∞' : state.quizLength})`;
+                const statsHTML = state.players.map(p => `<div>${p.name}: ${p.score}pts ${p.heart}×${p.lives}</div>`).join('<br>');
+                battleHud.innerHTML = statsHTML;
+            } else {
+                soloHud.style.display = 'block';
+                battleHud.style.display = 'none';
+                turnDisplay.style.display = 'none';
+                soloHud.innerHTML = `<div id="question-counter">Q ${state.currentQuestionIndex + 1}/${state.endlessMode ? '∞' : state.quizLength}</div><div id="score-display">score: ${state.correctAnswers}</div><div id="lives-display" style="display: ${state.survivalMode ? 'block' : 'none'};">❤️×${state.lives}</div>`;
+            }
+        };
+        const startQuiz = () => {
+            if (state.friendBattleMode) {
+                startFriendBattleSetup();
+                return;
+            }
+            let availableElements = elementData.filter(el => {
+                const inRange = el.number >= state.min && el.number <= state.max;
+                if (!inRange) return false;
+                if (state.selectedGenres.length === 0) return true;
+                return state.selectedGenres.some(genre => el.categories.includes(genre));
+            });
+            if (availableElements.length < 1) { showInfoPopup("エラー", `選択された範囲・ジャンルに該当する原子がありません。`); return; }
+            state.questions = Array.from({ length: state.quizLength }, () => availableElements[Math.floor(Math.random() * availableElements.length)].number);
+            state.currentQuestionIndex = 0; state.correctAnswers = 0; state.lives = (state.survivalMode && state.endlessMode) ? 1 : 3;
+            const formatKey = state.selectedFormats[Math.floor(Math.random() * state.selectedFormats.length)];
+            state.currentQuizFormat = quizFormats[formatKey];
+            document.getElementById('title-screen').classList.remove('active'); document.getElementById('quiz-screen').classList.add('active');
+            updateQuizInfo(); loadQuestion();
+        };
+
+        const startFriendBattleSetup = () => {
+            const colors = {赤: '#E53935', 青: '#1E88E5', 黄: '#FDD835', 緑: '#7CB342', 紫: '#8E24AA', 橙: '#FB8C00', 桃: '#EC407A', 水: '#55acee', 灰: '#808080', 黒: '#222222', 白: '#FFFFFF'};
+            const modal = document.getElementById('color-selection-modal');
+            const content = modal.querySelector('.modal-content');
+            content.innerHTML = `<h2>あなたの色は？ (プレイヤー1)</h2><div id="color-selection-grid"></div><button id="close-color-selection" class="btn gray-close-btn" style="margin-top: 20px;">閉じる</button>`;
+            const grid = content.querySelector('#color-selection-grid');
+            let selectedColors = [];
+            const createColorButtons = () => {
+                grid.innerHTML = '';
+                Object.entries(colors).forEach(([name, colorCode]) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn color-btn'; btn.textContent = name;
+                    btn.style.backgroundColor = colorCode;
+                    btn.style.color = (name === '黄' || name === '白') ? '#000' : '#FFF';
+                    btn.disabled = selectedColors.includes(name);
+                    btn.addEventListener('click', () => {
+                        selectedColors.push(name);
+                        if (selectedColors.length === 1) {
+                            content.querySelector('h2').textContent = 'あなたの色は？ (プレイヤー2)';
+                            createColorButtons();
+                        } else {
+                            setupAndStartBattle(selectedColors);
+                        }
+                    });
+                    grid.appendChild(btn);
+                });
+            };
+            createColorButtons();
+            content.querySelector('#close-color-selection').addEventListener('click', () => hideModal('color-selection-modal'));
+            showModal('color-selection-modal');
+        };
+
+        const setupAndStartBattle = (colors) => {
+            hideModal('color-selection-modal');
+            state.players = colors.map(colorName => ({
+                name: `${colorName}`,
+                color: colorName,
+                heart: colorToHeart[colorName] || '❤️',
+                score: 0,
+                lives: state.endlessMode ? 1 : 3
+            }));
+            state.currentPlayerIndex = 0; state.currentTurn = 1;
+            const formatKey = state.selectedFormats[Math.floor(Math.random() * state.selectedFormats.length)];
+            state.currentQuizFormat = quizFormats[formatKey];
+            document.getElementById('title-screen').classList.remove('active'); document.getElementById('quiz-screen').classList.add('active');
+            updateQuizInfo(); loadQuestion();
+        };
+
+        const loadQuestion = () => {
+            clearInterval(state.quizTimer);
+            const quizWrapper = document.getElementById('quiz-wrapper');
+
+            if (state.friendBattleMode) {
+                const isRotated = state.currentPlayerIndex === 1;
+                quizWrapper.classList.toggle('rotated', isRotated);
+            } else {
+                quizWrapper.classList.remove('rotated');
+            }
+
+            if (!state.friendBattleMode && ((!state.endlessMode && state.currentQuestionIndex >= state.quizLength) || (state.survivalMode && state.lives <= 0))) { endQuiz(); return; }
+            if (state.friendBattleMode && state.currentTurn > state.quizLength && !state.endlessMode) { endQuiz(); return; }
+
+            updateQuizInfo();
+            const timerDisplay = document.getElementById('timer-display');
+            if (state.timeLimitEnabled) {
+                const interruptBtn = document.getElementById('interrupt-btn');
+                if(interruptBtn) interruptBtn.style.display = 'block';
+                let timeLeft = state.timeLimit; timerDisplay.textContent = `${timeLeft}s`; timerDisplay.style.display = 'block';
+                state.quizTimer = setInterval(() => {
+                    timeLeft--; timerDisplay.textContent = `${timeLeft}s`;
+                    if (timeLeft <= 0) { clearInterval(state.quizTimer); checkAnswer(null, false); }
+                }, 1000);
+            } else { 
+                const interruptBtn = document.getElementById('interrupt-btn');
+                if(interruptBtn) interruptBtn.style.display = 'none';
+                timerDisplay.style.display = 'none'; 
+            }
+            
+            let availableElements = elementData.filter(el => {
+                const inRange = el.number >= state.min && el.number <= state.max; if (!inRange) return false;
+                if (state.selectedGenres.length === 0) return true;
+                return state.selectedGenres.some(genre => el.categories.includes(genre));
+            });
+            if(availableElements.length === 0) availableElements = [...elementData];
+
+            const currentAtomicNumber = availableElements[Math.floor(Math.random() * availableElements.length)].number;
+            state.questions[state.currentQuestionIndex] = currentAtomicNumber;
+
+            const optionsGrid = document.getElementById('options-grid'); const inputContainer = document.getElementById('input-container');
+            const answerInput = document.getElementById('answer-input'); const inputHelper = document.getElementById('input-helper');
+            optionsGrid.innerHTML = ''; inputContainer.style.display = 'none';
+            const format = state.currentQuizFormat;
+            const correctAnswerElement = elementData.find(el => el.number === currentAtomicNumber);
+            document.getElementById('question-text').textContent = format.getQuestionText(correctAnswerElement);
+            const correctAnswerText = format.getOptionText(correctAnswerElement).toString();
+            if (state.inputMode) {
+                inputContainer.style.display = 'flex'; answerInput.value = ''; answerInput.focus();
+                inputHelper.textContent = `解答例: 水素 (${format.answerType}で答えよ)`;
+            } else {
+                let optionsSet = new Set([correctAnswerText]);
+                let incorrectOptionsPool = [...new Set(availableElements.map(el => format.getOptionText(el).toString()))].filter(text => text !== correctAnswerText);
+                while(optionsSet.size < state.numberOfOptions && incorrectOptionsPool.length > 0) { const randomIndex = Math.floor(Math.random() * incorrectOptionsPool.length); optionsSet.add(incorrectOptionsPool.splice(randomIndex, 1)[0]); }
+                while(optionsSet.size < state.numberOfOptions) { const randomElement = elementData[Math.floor(Math.random() * elementData.length)]; optionsSet.add(format.getOptionText(randomElement).toString()); }
+                const shuffledOptions = Array.from(optionsSet).sort(() => Math.random() - 0.5);
+                optionsGrid.style.gridTemplateColumns = (state.numberOfOptions <= 8) ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)';
+                shuffledOptions.forEach(optionText => {
+                    const button = document.createElement('button'); button.textContent = optionText; button.classList.add('btn', 'option-btn');
+                    button.addEventListener('click', () => checkAnswer(button, optionText === correctAnswerText));
+                    optionsGrid.appendChild(button);
+                });
+            }
+        };
+        const checkAnswer = (element, isCorrect) => {
+            clearInterval(state.quizTimer); 
+            const interruptBtn = document.getElementById('interrupt-btn');
+            if (interruptBtn) interruptBtn.disabled = true;
+            
+            if (state.friendBattleMode) {
+                const currentPlayer = state.players[state.currentPlayerIndex];
+                if (isCorrect) {
+                    currentPlayer.score++;
+                } else {
+                    currentPlayer.lives--;
+                }
+                updateQuizInfo(); 
+                if (currentPlayer.lives <= 0) {
+                     if (state.inputMode) {
+                        const answerInput = document.getElementById('answer-input'); answerInput.disabled = true;
+                        answerInput.style.backgroundColor = isCorrect ? 'var(--correct-color)' : 'var(--incorrect-color)';
+                    } else {
+                         const correctAnswerText = state.currentQuizFormat.getOptionText(elementData.find(el => el.number === state.questions[state.currentQuestionIndex])).toString();
+                        Array.from(document.getElementById('options-grid').children).forEach(btn => {
+                            btn.disabled = true;
+                            if (btn.textContent === correctAnswerText) btn.classList.add('correct'); else btn.classList.add('faded');
+                        });
+                        if (!isCorrect && element) { element.classList.remove('faded'); element.classList.add('incorrect'); }
+                    }
+                    setTimeout(() => endQuiz(), 1500);
+                    return;
+                }
+            } else {
+                if (!isCorrect) {
+                    if(state.hardcoreMode) { endQuiz(true); return; }
+                    if(state.survivalMode) { state.lives--; if(state.lives <= 0) { endQuiz(true); return; } }
+                } else { state.correctAnswers++; }
+                updateQuizInfo(); 
+            }
+
+            if (state.inputMode) {
+                const answerInput = document.getElementById('answer-input'); answerInput.disabled = true;
+                answerInput.style.backgroundColor = isCorrect ? 'var(--correct-color)' : 'var(--incorrect-color)';
+            } else {
+                const correctAnswerText = state.currentQuizFormat.getOptionText(elementData.find(el => el.number === state.questions[state.currentQuestionIndex])).toString();
+                Array.from(document.getElementById('options-grid').children).forEach(btn => {
+                    btn.disabled = true;
+                    if (btn.textContent === correctAnswerText) btn.classList.add('correct'); else btn.classList.add('faded');
+                });
+                if (!isCorrect && element) { element.classList.remove('faded'); element.classList.add('incorrect'); }
+            }
+            
+            setTimeout(() => {
+                if (interruptBtn) interruptBtn.disabled = false;
+                if(state.inputMode){ document.getElementById('answer-input').disabled = false; document.getElementById('answer-input').style.backgroundColor = 'var(--input-bg)'; }
+                
+                if (state.friendBattleMode) {
+                    if (state.currentPlayerIndex === 1) { 
+                        state.currentTurn++;
+                    }
+                    state.currentPlayerIndex = (state.currentPlayerIndex + 1) % 2;
+                } else {
+                    state.currentQuestionIndex++;
+                }
+
+                loadQuestion();
+            }, 1500);
+        };
+        const endQuiz = (isGameOver = false) => {
+            clearInterval(state.quizTimer);
+            let resultMessage = "終了！"; let resultDetails = ""; let earnedCoins = 0;
+
+            if (state.friendBattleMode) {
+                const [p1, p2] = state.players;
+                let winner = null;
+                if (p1.lives <= 0) { winner = p2; resultMessage = `${p1.name}のライフが0に！ ${p2.name}の勝利！`; }
+                else if (p2.lives <= 0) { winner = p1; resultMessage = `${p2.name}のライフが0に！ ${p1.name}の勝利！`; }
+                else if (p1.score > p2.score) winner = p1;
+                else if (p2.score > p1.score) winner = p2;
+                if(winner && !resultMessage.includes('勝利')) resultMessage = `${winner.name}の勝利！`;
+                else if (!winner) resultMessage = "引き分け！";
+                
+                if (winner) earnedCoins = Math.floor(winner.score / 1.5);
+                resultDetails = `${p1.name}: ${p1.score}pts | ${p2.name}: ${p2.score}pts`;
+                if(winner) resultDetails += `<br>勝利した${winner.name}がコインを${earnedCoins}枚獲得しました！`;
+                
+            } else {
+                if(isGameOver) resultMessage = "ゲームオーバー！";
+                if(state.hardcoreMode && !isGameOver) { earnedCoins = Math.floor(state.correctAnswers / 2); }
+                else if (isGameOver && state.hardcoreMode) { earnedCoins = 0; }
+                else if (state.survivalMode && state.endlessMode) { earnedCoins = Math.floor(state.correctAnswers * 1.5); }
+                else if (state.survivalMode) { earnedCoins = Math.floor(state.correctAnswers / 2) + state.lives; }
+                else { earnedCoins = Math.floor(state.correctAnswers / 2); }
+                resultDetails = `コインを${earnedCoins}枚獲得しました！`;
+            }
+            
+            state.coins += earnedCoins; updateCoinDisplay();
+            document.getElementById('results-modal').querySelector('h2').textContent = resultMessage;
+            document.getElementById('results-modal').querySelector('p').innerHTML = resultDetails;
+            showModal('results-modal');
+        };
+        const showGenshicho = (atomicNumber) => {
+            state.genshichoCurrentIndex = atomicNumber - 1; const el = elementData[state.genshichoCurrentIndex]; if (!el) return;
+            document.getElementById('genshicho-number').textContent = `原子番号${el.number}`;
+            document.getElementById('genshicho-category').textContent = el.categories.join('・');
+            let periodGroup = `${el.period}周期`; if (el.group !== null) periodGroup += ` ${el.group}族`;
+            document.getElementById('genshicho-period-group').textContent = periodGroup;
+            document.getElementById('genshicho-symbol').textContent = el.symbol;
+            document.getElementById('genshicho-name').textContent = el.name;
+            showModal('genshicho-modal');
+        };
+        const showGenshichoList = () => {
+            const container = document.getElementById('genshicho-list-modal').querySelector('#genshicho-list-container'); container.innerHTML = '';
+            const categories = [ { name: '全元素', filter: () => true }, { name: '遷移元素', filter: el => el.categories.includes('遷移元素') }, { name: '典型元素', filter: el => el.categories.includes('典型元素') }, { name: 'アルカリ金属', filter: el => el.categories.includes('アルカリ金属') }, { name: 'アルカリ土類金属', filter: el => el.categories.includes('アルカリ土類金属') }, { name: 'ハロゲン', filter: el => el.categories.includes('ハロゲン') }, { name: '貴ガス', filter: el => el.categories.includes('貴ガス') }, { name: '半金属', filter: el => el.categories.includes('半金属') }, { name: 'ランタノイド', filter: el => el.categories.includes('ランタノイド') }, { name: 'アクチノイド', filter: el => el.categories.includes('アクチノイド') } ];
+            categories.forEach(cat => {
+                const section = document.createElement('div'); section.className = 'genshicho-list-category'; section.innerHTML = `<h3>---${cat.name}---</h3>`;
+                const grid = document.createElement('div'); grid.className = 'genshicho-list-grid';
+                elementData.filter(cat.filter).forEach(el => {
+                    const btn = document.createElement('button'); btn.className = 'btn range-btn'; btn.textContent = `${el.number} ${el.name}`;
+                    btn.addEventListener('click', () => { hideModal('genshicho-list-modal'); showGenshicho(el.number); });
+                    grid.appendChild(btn);
+                });
+                section.appendChild(grid); container.appendChild(section);
+            });
+            showModal('genshicho-list-modal');
+        };
+        const handleSettingsClick = () => {
+            tempSettings = { ...state };
+            document.getElementById('quiz-length-display').textContent = tempSettings.quizLength;
+            document.getElementById('time-limit-display').textContent = `${tempSettings.timeLimit}s`;
+            document.getElementById('time-limit-switch').checked = tempSettings.timeLimitEnabled;
+            document.querySelectorAll('.option-count-btn').forEach(btn => btn.classList.toggle('active', parseInt(btn.dataset.count) === tempSettings.numberOfOptions));
+            updateModeButtons(true); updateThemeButtons(true);
+            showModal('settings-modal');
+        };
+        const handleCoinClick = () => {
+            if (state.min === 11 && state.max === 23 && !state.fibonacciBonusClaimed) { state.coins += 112; state.fibonacciBonusClaimed = true; showInfoPopup('ボーナス！', 'フィボナッチボーナス！ 112コイン獲得！'); updateCoinDisplay();
+            } else if (state.min === 12 && state.max === 48 && !state.twoPowerBonusClaimed) { state.coins += 128; state.twoPowerBonusClaimed = true; showInfoPopup('ボーナス！','2ⁿ⁻¹ボーナス！ 128コイン獲得！'); updateCoinDisplay();
+            } else { showModal('coin-info-modal'); }
+        };
+        const handleFormatClick = () => {
+            tempSettings.formats = [...state.selectedFormats];
+            const formatModal = document.getElementById('format-modal');
+            formatModal.querySelectorAll('.format-btn').forEach(btn => {
+                const formatKey = btn.dataset.formatKey;
+                const isSelected = tempSettings.formats.includes(formatKey);
+                btn.classList.toggle('selected', isSelected);
+                btn.style.backgroundColor = isSelected ? quizFormats[formatKey].color : 'var(--unselected-btn-bg)';
+                btn.style.color = 'white';
+                if (isSelected) {
+                    const color = quizFormats[formatKey].color;
+                    if(color === 'var(--format-color-7)' || color === 'var(--format-color-8)' || color === 'var(--format-color-kigasu)') btn.style.color = '#000';
+                } else {
+                     btn.style.color = 'var(--unselected-btn-text)';
+                }
+            });
+            showModal('format-modal');
+        };
+        const handleExpansion = (isBulk = false) => {
+            if (state.unlockedMaxLimit >= 118) { showGenshicho(1); return; }
+            if (isBulk) {
+                const tiersToUnlock = expansionTiers.filter(t => t.limit > state.unlockedMaxLimit); if (tiersToUnlock.length === 0) return;
+                const totalCost = tiersToUnlock.reduce((sum, tier) => sum + tier.cost, 0);
+                const purchaseAction = () => {
+                    if (state.coins >= totalCost) { state.coins -= totalCost; state.unlockedMaxLimit = 118; updateCoinDisplay(); updateExpansionButton(); showInfoPopup('範囲拡張', `範囲を 118 まで一括で拡張しました！`);
+                    } else { showInfoPopup('コイン不足', 'コインが足りません。'); }
+                };
+                showConfirmation('範囲一括拡張', `残り全ての範囲を🪙×${totalCost}で一括解放しますか？`, purchaseAction);
+            } else {
+                const nextTier = expansionTiers.find(t => t.limit > state.unlockedMaxLimit); if (!nextTier) return;
+                const purchaseAction = () => {
+                    if (state.coins >= nextTier.cost) { state.coins -= nextTier.cost; state.unlockedMaxLimit = nextTier.limit; updateCoinDisplay(); updateExpansionButton(); showInfoPopup('範囲拡張', `範囲を ${nextTier.limit} まで拡張しました！`);
+                    } else { showInfoPopup('コイン不足', 'コインが足りません。'); }
+                };
+                showConfirmation('範囲拡張', `🪙×${nextTier.cost}で範囲拡張をしますか？`, purchaseAction);
+            }
+        };
+        function updateModeButtons(useTemp = false) {
+            const settings = useTemp ? tempSettings : state;
+            const survivalBtn = document.getElementById('survival-mode-btn'); const hardcoreBtn = document.getElementById('hardcore-mode-btn');
+            const inputBtn = document.getElementById('input-mode-btn'); const endlessBtn = document.getElementById('endless-mode-btn');
+            const friendBattleBtn = document.getElementById('friend-battle-btn');
+            survivalBtn.style.backgroundColor = settings.survivalMode ? 'var(--mode-survival)' : 'var(--unselected-btn-bg)';
+            hardcoreBtn.style.backgroundColor = settings.hardcoreMode ? 'var(--mode-hardcore)' : 'var(--unselected-btn-bg)';
+            inputBtn.style.backgroundColor = settings.inputMode ? 'var(--answer-btn-color)' : 'var(--unselected-btn-bg)';
+            endlessBtn.style.backgroundColor = settings.endlessMode ? 'var(--mode-endless)' : 'var(--unselected-btn-bg)';
+            friendBattleBtn.style.backgroundColor = settings.friendBattleMode ? 'var(--green-btn)' : 'var(--unselected-btn-bg)';
+            survivalBtn.style.color = settings.survivalMode ? '#FFF' : 'var(--unselected-btn-text)';
+            hardcoreBtn.style.color = settings.hardcoreMode ? '#FFF' : 'var(--unselected-btn-text)';
+            inputBtn.style.color = settings.inputMode ? '#FFF' : 'var(--unselected-btn-text)';
+            endlessBtn.style.color = settings.endlessMode ? '#FFF' : 'var(--unselected-btn-text)';
+            friendBattleBtn.style.color = settings.friendBattleMode ? '#FFF' : 'var(--unselected-btn-text)';
+            hardcoreBtn.classList.toggle('hardcore', settings.hardcoreMode);
+            endlessBtn.classList.toggle('endless', settings.endlessMode)
+            document.getElementById('survival-section').style.display = settings.survivalMode ? 'block' : 'none';
+        }
+        function updateThemeButtons(useTemp = false) {
+            const settings = useTemp ? tempSettings : state;
+            const lightBtn = document.getElementById('theme-light-btn'); const darkBtn = document.getElementById('theme-dark-btn');
+            if (settings.theme === 'light') {
+                lightBtn.style.backgroundColor = 'var(--yellow-btn)'; lightBtn.style.color = '#000';
+                darkBtn.style.backgroundColor = 'var(--unselected-btn-bg-light)'; darkBtn.style.color = 'var(--unselected-btn-text-light)';
+            } else {
+                lightBtn.style.backgroundColor = 'var(--unselected-btn-bg-dark)'; lightBtn.style.color = 'var(--unselected-btn-text-dark)';
+                darkBtn.style.backgroundColor = '#3b5998'; darkBtn.style.color = '#FFF';
+            }
+        }
+        const initialize = () => {
+            const quizScreenEl = document.getElementById('quiz-screen');
+            quizScreenEl.innerHTML = `<div id="quiz-wrapper"><div id="quiz-header"><div id="battle-hud"></div><div id="turn-display"></div><div class="header-spacer"></div></div><div id="quiz-info"></div><div id="timer-display"></div><button id="pause-btn" class="icon-btn"><svg viewBox="0 0 36 36"><path d="M12,26 L16,26 L16,10 L12,10 L12,26 Z M20,10 L20,26 L24,26 L24,10 L20,10 Z"></path></svg></button><button id="interrupt-btn" class="btn icon-btn" style="display: none; font-size: 1rem; padding: 10px 15px;">中断</button><div id="quiz-content-area"><div id="question-container"><p id="question-text"></p></div><div id="options-grid"></div><div id="input-container" style="display: none;"><input type="text" id="answer-input" placeholder="答えを入力..."><button id="submit-answer-btn" class="btn">解答</button><div id="input-helper"></div></div></div></div>`;
+            document.getElementById('pause-menu').innerHTML = `<div class="modal-content"><h2>ポーズ</h2><button id="retry-btn" class="btn modal-btn">リトライ</button><button id="title-btn" class="btn modal-btn">タイトルに戻る</button><button class="btn gray-close-btn" data-modal-close>閉じる</button></div>`;
+            document.getElementById('confirmation-popup').innerHTML = `<div class="modal-content"><h2 id="confirmation-title">確認</h2><p></p><div class="confirmation-buttons"><button id="confirm-no-btn" class="btn modal-btn gray-close-btn">いいえ</button><button id="confirm-yes-btn" class="btn modal-btn">はい</button></div></div>`;
+            document.getElementById('settings-modal').innerHTML = `<div class="modal-content"><h2>設定</h2><div class="setting-item"><h3>---問題数---</h3><div id="quiz-length-display" class="setting-value">10</div><div class="setting-buttons" id="quiz-length-buttons"></div><button id="default-length-btn" class="btn gray-close-btn">デフォルトの問題数に戻す</button></div><div class="setting-item"><h3>---選択肢数---</h3><div id="options-count-buttons"></div></div><div class="setting-item"><h3>---制限時間---</h3><label class="switch"><input type="checkbox" id="time-limit-switch"><span class="slider"></span></label><div id="time-limit-display" class="setting-value">10s</div><div class="setting-buttons" id="time-limit-buttons"></div><button id="default-time-limit-btn" class="btn gray-close-btn">デフォルトの制限時間に戻す</button></div><div class="setting-item"><h3>---モード---</h3><div class="mode-btn-container"><button id="survival-mode-btn" class="btn mode-btn">サバイバル</button><button id="hardcore-mode-btn" class="btn mode-btn">ハードコア</button><button id="input-mode-btn" class="btn mode-btn">入力</button></div></div><div id="survival-section" class="setting-item"><h3>--- サバイバル ---</h3><div class="mode-btn-container"><button id="endless-mode-btn" class="btn mode-btn">エンドレス</button><button id="friend-battle-btn" class="btn mode-btn">フレンド対戦</button></div></div><div class="setting-item"><h3>---背景画面---</h3><div class="mode-btn-container"><button id="theme-light-btn" class="btn">ライト</button><button id="theme-dark-btn" class="btn">ダーク</button></div></div><button id="save-settings-btn" class="btn gray-close-btn">保存して閉じる</button></div>`;
+            document.getElementById('coin-info-modal').innerHTML = `<div class="modal-content"><h2>コイン</h2><p>正解数に応じてもらえる、範囲上限、ジャンル、形式の解放に使う仮想通貨。</p><button class="btn gray-close-btn" data-modal-close>閉じる</button></div>`;
+            document.getElementById('results-modal').innerHTML = `<div class="modal-content"><h2>終了！</h2><p></p><button id="results-to-title-btn" class="btn green-btn">タイトルに戻る</button></div>`;
+            document.getElementById('info-popup').innerHTML = `<div class="modal-content"><h2 id="info-title"></h2><p></p><button class="btn gray-close-btn" data-modal-close>閉じる</button></div>`;
+            document.getElementById('genshicho-modal').innerHTML = `<div class="modal-content" id="genshicho-content"><div id="genshicho-header"><span id="genshicho-number"></span><span id="genshicho-category"></span><span id="genshicho-period-group"></span></div><div id="genshicho-main"><div id="genshicho-symbol"></div><div id="genshicho-name"></div></div><div id="genshicho-footer"><button id="genshicho-prev" class="btn range-btn">前へ</button><div id="genshicho-center-controls"><button id="genshicho-close" class="btn gray-close-btn">閉じる</button><button id="genshicho-details" class="btn range-btn">▲</button></div><button id="genshicho-next" class="btn range-btn">次へ</button></div></div>`;
+            document.getElementById('genshicho-list-modal').innerHTML = `<div class="modal-content"><div id="genshicho-list-container"></div><button class="btn gray-close-btn" data-modal-close style="margin-top: 20px;">閉じる</button></div>`;
+            document.getElementById('interrupt-overlay').innerHTML = `<div>長押しで中断</div><svg id="interrupt-circle"><circle id="interrupt-circle-path" r="45" cx="50" cy="50"></circle></svg>`;
+            document.getElementById('color-selection-modal').innerHTML = `<div class="modal-content"></div>`;
+            const formatModalContent = document.getElementById('format-modal');
+            const formatGridHTML = Object.entries(quizFormats).map(([key, { text }]) => `<button class="btn format-btn" data-format-key="${key}">${text}</button>`).join('');
+            formatModalContent.innerHTML = `<div class="modal-content"><h2>どの形式で遊ぶ？</h2><div id="format-grid">${formatGridHTML}</div><button id="reset-formats-btn" class="btn gray-close-btn">初期に戻す</button><button id="save-formats-btn" class="btn">保存して閉じる</button></div>`;
+            
+            const rangeBtnValues = [-50, -25, -10, -5, -1, 1, 5, 10, 25, 50]; const lengthBtnValues = [-100, -50, -25, -10, -5, -1, 1, 10, 25, 50, 100];
+            const timeLimitBtnValues = [-10, -5, -1, 1, 5, 10]; const optionsCountValues = [4, 8, 12, 16, 20, 24];
+            const genres = ['遷移元素', '典型元素', 'アルカリ金属', 'アルカリ土類金属', 'ハロゲン', '貴ガス', 'ランタノイド', 'アクチノイド'];
+            const createButtons = (values, cls) => values.map(v => `<button class="btn ${cls}" data-val="${v}">${v > 0 ? '+' : ''}${v}</button>`).join('');
+            document.querySelectorAll('.range-buttons').forEach(div => div.innerHTML = createButtons(rangeBtnValues, 'range-btn'));
+            document.getElementById('quiz-length-buttons').innerHTML = createButtons(lengthBtnValues, 'range-btn');
+            document.getElementById('time-limit-buttons').innerHTML = createButtons(timeLimitBtnValues, 'range-btn');
+            document.getElementById('options-count-buttons').innerHTML = optionsCountValues.map(v => `<button class="btn option-count-btn range-btn" data-count="${v}">${v}択</button>`).join('');
+            document.getElementById('genre-buttons').innerHTML = genres.map(g => `<button class="btn genre-btn" data-genre="${g}">${g}</button>`).join('');
+            updateCoinDisplay(); updateRangeDisplay(); updateExpansionButton(); updateFormatButtonColor();
+            
+            // --- Special Button Listeners ---
+            const expansionBtn = document.getElementById('expansion-btn');
+            const longPressDuration = 1300;
+            const stopLongPress = () => { clearTimeout(state.longPressTimer); if(state.pressAnimation) cancelAnimationFrame(state.pressAnimation); expansionBtn.style.setProperty('--fill-width', '0%'); };
+            const startLongPress = () => {
+                state.isLongPress = false; const startTime = Date.now();
+                const animateFill = () => {
+                    const elapsedTime = Date.now() - startTime; const fillPercentage = Math.min(100, (elapsedTime / longPressDuration) * 100);
+                    expansionBtn.style.setProperty('--fill-width', `${fillPercentage}%`);
+                    if (elapsedTime < longPressDuration) { state.pressAnimation = requestAnimationFrame(animateFill); }
+                };
+                state.pressAnimation = requestAnimationFrame(animateFill);
+                state.longPressTimer = setTimeout(() => { state.isLongPress = true; handleExpansion(true); }, longPressDuration);
+            };
+            expansionBtn.addEventListener('mousedown', startLongPress);
+            expansionBtn.addEventListener('mouseup', () => { if (!state.isLongPress) { handleExpansion(false); } stopLongPress(); });
+            expansionBtn.addEventListener('mouseleave', stopLongPress);
+            expansionBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startLongPress(); });
+            expansionBtn.addEventListener('touchend', (e) => { e.preventDefault(); if (!state.isLongPress) { handleExpansion(false); } stopLongPress(); });
+
+            const interruptBtn = document.getElementById('interrupt-btn');
+            if (interruptBtn) {
+                const interruptCircle = document.getElementById('interrupt-circle-path');
+                const circumference = 2 * Math.PI * 45;
+                if(interruptCircle) interruptCircle.style.strokeDasharray = circumference;
+                const stopInterrupt = () => { clearTimeout(state.interruptTimer); if(interruptCircle) { interruptCircle.style.transition = 'stroke-dashoffset 0.2s ease-out'; interruptCircle.style.strokeDashoffset = circumference; } hideModal('interrupt-overlay'); };
+                interruptBtn.addEventListener('mousedown', (e) => {
+                    showModal('interrupt-overlay');
+                    if(interruptCircle) {
+                        interruptCircle.style.transition = 'none';
+                        interruptCircle.style.strokeDashoffset = circumference;
+                        setTimeout(() => { interruptCircle.style.transition = 'stroke-dashoffset 1s linear'; interruptCircle.style.strokeDashoffset = 0; }, 10);
+                    }
+                    state.interruptTimer = setTimeout(showTitleScreen, 1000);
+                });
+                interruptBtn.addEventListener('mouseup', stopInterrupt);
+                interruptBtn.addEventListener('mouseleave', stopInterrupt);
+                interruptBtn.addEventListener('touchstart', (e) => { e.preventDefault(); interruptBtn.dispatchEvent(new MouseEvent('mousedown')); });
+                interruptBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopInterrupt(); });
+            }
+
+            // --- General Click Listener ---
+            document.body.addEventListener('click', e => {
+                const target = e.target.closest('button'); if (!target) return;
+                if (['expansion-btn', 'interrupt-btn'].includes(target.id)) return;
+                if (target.matches('[data-modal-close]')) { hideModal(target.closest('.modal-overlay')); return; }
+                const idActions = {
+                    'start-btn': startQuiz, 'format-btn': handleFormatClick,
+                    'default-range-btn': () => { state.min = state.defaultMin; state.max = state.defaultMax; updateRangeDisplay(); },
+                    'coin-display': handleCoinClick, 'settings-btn': handleSettingsClick, 'results-to-title-btn': showTitleScreen,
+                    'pause-btn': () => showModal('pause-menu'), 'retry-btn': () => { hideModal('pause-menu'); showConfirmation('リトライ', 'この範囲でリトライしますか？', startQuiz); },
+                    'title-btn': () => { hideModal('pause-menu'); showConfirmation('タイトル', 'タイトルに戻りますか？', showTitleScreen); },
+                    'confirm-yes-btn': () => { if (state.confirmAction) state.confirmAction(); state.confirmAction = null; hideModal('confirmation-popup'); },
+                    'confirm-no-btn': () => { hideModal('confirmation-popup'); if (document.getElementById('quiz-screen').classList.contains('active')) showModal('pause-menu'); },
+                    'save-settings-btn': () => {
+                        const themeChanged = state.theme !== tempSettings.theme;
+                        Object.assign(state, tempSettings);
+                        if (themeChanged) {
+                            document.body.classList.add('theme-transition');
+                            document.body.dataset.theme = state.theme;
+                            setTimeout(() => { document.body.classList.remove('theme-transition'); }, 5000);
+                        }
+                        hideModal('settings-modal'); document.getElementById('start-btn').classList.toggle('hardcore-active', state.hardcoreMode);
+                    },
+                    'default-length-btn': () => { tempSettings.quizLength = 10; document.getElementById('quiz-length-display').textContent = 10; },
+                    'default-time-limit-btn': () => { tempSettings.timeLimit = 10; document.getElementById('time-limit-display').textContent = '10s'; },
+                    'genshicho-prev': () => showGenshicho(state.genshichoCurrentIndex === 0 ? 118 : state.genshichoCurrentIndex),
+                    'genshicho-next': () => showGenshicho(state.genshichoCurrentIndex === 117 ? 1 : state.genshichoCurrentIndex + 2),
+                    'genshicho-close': () => hideModal('genshicho-modal'),
+                    'genshicho-details': showGenshichoList,
+                    'save-formats-btn': () => { state.selectedFormats = tempSettings.formats.length > 0 ? [...tempSettings.formats] : ['number_to_name']; hideModal('format-modal'); updateFormatButtonColor(); },
+                    'reset-formats-btn': () => {
+                        tempSettings.formats = ['number_to_name'];
+                        const formatModal = document.getElementById('format-modal');
+                        formatModal.querySelectorAll('.format-btn').forEach(btn => {
+                            const formatKey = btn.dataset.formatKey;
+                            const isSelected = tempSettings.formats.includes(formatKey);
+                            btn.classList.toggle('selected', isSelected);
+                            btn.style.backgroundColor = isSelected ? quizFormats[formatKey].color : 'var(--unselected-btn-bg)';
+                            btn.style.color = isSelected ? (quizFormats[formatKey].color === 'var(--format-color-7)' ? '#000' : '#FFF') : 'var(--unselected-btn-text)';
+                        });
+                    },
+                    'theme-light-btn': () => { tempSettings.theme = 'light'; updateThemeButtons(true); },
+                    'theme-dark-btn': () => { tempSettings.theme = 'dark'; updateThemeButtons(true); },
+                    'submit-answer-btn': () => {
+                        const answerInput = document.getElementById('answer-input');
+                        const correctAnswerText = state.currentQuizFormat.getOptionText(elementData.find(el => el.number === state.questions[state.currentQuestionIndex])).toString();
+                        checkAnswer(null, answerInput.value.trim().toLowerCase() === correctAnswerText.toLowerCase());
+                    }
+                };
+                if (target.id && idActions[target.id]) { idActions[target.id](); return; }
+                if(target.closest('.range-buttons')) { const control = target.closest('.range-control'); const label = control.querySelector('.range-label'); if (label) adjustRange(label.textContent.trim(), parseInt(target.dataset.val)); return; }
+                if (target.closest('#quiz-length-buttons')) { tempSettings.quizLength = Math.max(1, Math.min(500, tempSettings.quizLength + parseInt(target.dataset.val))); document.getElementById('quiz-length-display').textContent = tempSettings.quizLength; return; }
+                if (target.closest('#time-limit-buttons')) { tempSettings.timeLimit = Math.max(3, Math.min(45, tempSettings.timeLimit + parseInt(target.dataset.val))); document.getElementById('time-limit-display').textContent = `${tempSettings.timeLimit}s`; return; }
+                if (target.matches('.option-count-btn')) { tempSettings.numberOfOptions = parseInt(target.dataset.count); document.querySelectorAll('.option-count-btn').forEach(b => b.classList.remove('active')); target.classList.add('active'); return; }
+                if (target.matches('.genre-btn')) {
+                    const genre = target.dataset.genre; target.classList.toggle('selected');
+                    if (state.selectedGenres.includes(genre)) { state.selectedGenres = state.selectedGenres.filter(g => g !== genre); } else { state.selectedGenres.push(genre); }
+                    return;
+                }
+                if (target.matches('.format-btn')) {
+                    const key = target.dataset.formatKey; const index = tempSettings.formats.indexOf(key);
+                    if (index > -1) { tempSettings.formats.splice(index, 1); } else { tempSettings.formats.push(key); }
+                    target.classList.toggle('selected');
+                    target.style.backgroundColor = target.classList.contains('selected') ? quizFormats[key].color : 'var(--unselected-btn-bg)';
+                    target.style.color = 'white';
+                    if (target.classList.contains('selected')) {
+                        const color = quizFormats[key].color;
+                        if(color === 'var(--format-color-7)' || color === 'var(--format-color-8)') target.style.color = '#000';
+                    } else {
+                        target.style.color = 'var(--unselected-btn-text)';
+                    }
+                }
+            });
+            document.getElementById('answer-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') { document.getElementById('submit-answer-btn').click(); } });
+            document.getElementById('time-limit-switch').addEventListener('change', (e) => { tempSettings.timeLimitEnabled = e.target.checked; });
+            document.getElementById('survival-mode-btn').addEventListener('click', (e) => { tempSettings.survivalMode = !tempSettings.survivalMode; if(tempSettings.survivalMode) tempSettings.hardcoreMode = false; if(!tempSettings.survivalMode) tempSettings.friendBattleMode = false; updateModeButtons(true); });
+            document.getElementById('hardcore-mode-btn').addEventListener('click', (e) => { tempSettings.hardcoreMode = !tempSettings.hardcoreMode; if(tempSettings.hardcoreMode) { tempSettings.survivalMode = false; tempSettings.endlessMode = false; tempSettings.friendBattleMode = false; } updateModeButtons(true); });
+            document.getElementById('input-mode-btn').addEventListener('click', (e) => { tempSettings.inputMode = !tempSettings.inputMode; updateModeButtons(true); });
+            document.getElementById('endless-mode-btn').addEventListener('click', (e) => { tempSettings.endlessMode = !tempSettings.endlessMode; updateModeButtons(true); });
+            document.getElementById('friend-battle-btn').addEventListener('click', (e) => { tempSettings.friendBattleMode = !tempSettings.friendBattleMode; updateModeButtons(true); });
+        };
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
+
